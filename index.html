@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Editable Tax Invoice</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    .invoice-container {
+      width: 800px;
+      margin: 0 auto;
+      background-color: #fff;
+      border: 1px solid #ccc;
+      padding: 20px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      background-color: #ffe6f0;
+    }
+    .header {
+      text-align: center;
+      border-bottom: 2px solid #000;
+      padding-bottom: 10px;
+      margin-bottom: 20px;
+      position: relative;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 19px;
+      text-decoration: underline;
+    }
+    .header p {
+      margin: 5px 0;
+      font-size: 15px;
+    }
+    .circular-photo {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      overflow: hidden;
+      border: 2px solid #000;
+    }
+    .circular-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .invoice-details {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .invoice-details p {
+      margin: 5px 0;
+      font-size: 14px;
+    }
+    .to-section {
+      margin-bottom: 20px;
+    }
+    .to-section p {
+      margin: 5px 0;
+      font-size: 14px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    th, td {
+      border: 1px solid #000;
+      padding: 8px;
+      text-align: center;
+      font-size: 14px;
+    }
+    th {
+      background-color: #f0f0f0;
+    }
+    input[type="text"], input[type="number"], select {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 5px;
+      font-size: 14px;
+    }
+    .totals {
+      margin-top: 20px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .totals-left, .totals-right {
+      width: 48%;
+    }
+    .abp {
+      font-size: small;
+    }
+    .totals-right table {
+      width: 100%;
+    }
+    .totals-right td {
+      text-align: right;
+    }
+    .footer {
+      margin-top: 20px;
+      font-size: 12px;
+    }
+    .footer p {
+      margin: 5px 0;
+    }
+    .signature {
+      text-align: right;
+      margin-top: 20px;
+    }
+    button {
+      padding: 5px 10px;
+      cursor: pointer;
+      margin: 0 2px;
+    }
+    .download-button {
+      margin-top: 20px;
+      text-align: center;
+    }
+    .download-button button {
+      padding: 10px 20px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .download-button button:hover {
+      background-color: #45a049;
+    }
+  </style>
+</head>
+<body>
+  <div class="invoice-container" id="invoice-container">
+    <div class="header">
+      <div class="circular-photo">
+        <img src="God.jpg" alt="Circular Photo">
+      </div>
+      <h1>TAX INVOICE</h1>
+      <h2>BEDAMATA ENTERPRISES</h2>
+      <p>Near State Bank of India, Bhusugaon, Bhadrasahi, Barbil, Keonjhar-758035</p>
+      <p>Mob.: 8249834818</p>
+      <p style="background-color: yellow; display: inline-block; font-weight: bold;">GSTIN: 21ASGPR2606F1Z5</p>
+    </div>
+
+    <div class="invoice-details">
+      <div>
+        <p>To,</p>
+        <p>M/s. <input type="text" id="customer-name" value="Krishna Construction (P) Ltd"></p>
+        <p>Address <input type="text" id="customer-address" value="123 Main Street, Bhubaneswar, Odisha"></p>
+        <p>GSTIN <input type="text" id="customer-gstin" value="20AADCK9668K1Z7"></p>
+      </div>
+      <div>
+        <p>SI.No. <input type="text" id="invoice-number" value="501" style="width: 50px;"></p>
+        <p>Date: <input type="date" id="invoice-date"></p>
+        <p>Chalan.No. <input type="text" id="chalan-number" style="width: 100px;"></p>
+        <p>Date: <input type="date" id="chalan-date"></p>
+      </div>
+    </div>
+
+    <table id="items-table">
+      <thead>
+        <tr>
+          <th>Sl No</th>
+          <th>Description of goods</th>
+          <th>HSN Code.</th>
+          <th>Quantity</th>
+          <th>Unit Price Rs.</th>
+          <th>Value of goods Rs. P</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="items-tbody">
+        <!-- Items will be populated by JavaScript -->
+      </tbody>
+    </table>
+
+    <div class="totals">
+      <div class="totals-left">
+        <p style="font-size: 14px;">Rupees: <span id="amount-in-words"></span> Only)</p>
+        <p class="abp">Goods once sold can not taken back.</p>
+        <p class="abp">All disputes are subject to Bhubaneswar Jurisdiction</p>
+        <p style="font-weight: bold;font-size: 14px;">State Bank of India, Bhadrasahi, Barbil, Keonjhar</p>
+        <p style="font-weight: bold;font-size: 14px;">Account No.: 41434040309</p>
+        <p style="font-weight: bold;font-size: 14px;">IFSC Code: SBIN0006465</p>
+      </div>
+      <div class="totals-right">
+        <table>
+          <tr>
+            <td>Total</td>
+            <td id="total-value">0.00</td>
+          </tr>
+          <tr>
+            <td>CGST @ <input type="number" id="cgst-rate" value="14" style="width: 50px;" step="0.1">%</td>
+            <td id="cgst-amount">0.00</td>
+          </tr>
+          <tr>
+            <td>SGST @ <input type="number" id="sgst-rate" value="14" style="width: 50px;" step="0.1">%</td>
+            <td id="sgst-amount">0.00</td>
+          </tr>
+          <tr>
+            <td>Grand Total</td>
+            <td id="grand-total">0.00</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="signature">
+      <p>For BEDAMATA ENTERPRISES</p>
+    </div>
+
+    <!-- <div class="download-button">
+      <button onclick="downloadPDF()">Download as PDF</button>
+    </div> -->
+  </div>
+
+  <script>
+    // Function to format the current date
+    function formatDate() {
+      const today = new Date();
+      const day = String(today.getDate()).padStart(2, '0');
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const year = today.getFullYear();
+      return `${year}-${month}-${day}`;
+    }
+
+    // Function to convert number to words (Indian system)
+    function numberToWords(num) {
+      const ones = ['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine'];
+      const tens = ['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
+      const teens = ['Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
+
+      if (num === 0) return 'Zero';
+
+      function convertLessThanThousand(n) {
+        if (n === 0) return '';
+        if (n < 10) return ones[n];
+        if (n < 20) return teens[n - 10];
+        if (n < 100) return tens[Math.floor(n / 10)] + (n % 10 ? ' ' + ones[n % 10] : '');
+        return ones[Math.floor(n / 100)] + ' Hundred' + (n % 100 ? ' and ' + convertLessThanThousand(n % 100) : '');
+      }
+
+      let result = '';
+      if (num >= 100000) {
+        result += convertLessThanThousand(Math.floor(num / 100000)) + ' Lakh ';
+        num %= 100000;
+      }
+      if (num >= 1000) {
+        result += convertLessThanThousand(Math.floor(num / 1000)) + ' Thousand ';
+        num %= 1000;
+      }
+      if (num > 0) {
+        result += convertLessThanThousand(num);
+      }
+      return result.trim();
+    }
+
+    // Function to parse quantity (e.g., "150 bags" -> 150)
+    function parseQuantity(quantityStr) {
+      const match = quantityStr.match(/^\d+(\.\d+)?/);
+      return match ? parseFloat(match[0]) : 0;
+    }
+
+    // Function to update action buttons visibility
+    function updateActionButtons() {
+      const tbody = document.getElementById('items-tbody');
+      const rows = tbody.children;
+      const showRemove = rows.length > 1;
+      
+      Array.from(rows).forEach(row => {
+        const actionCell = row.cells[row.cells.length - 1];
+        const removeButton = actionCell.querySelector('button[onclick="removeItem(this)"]');
+        if (removeButton) {
+          removeButton.style.display = showRemove ? 'inline-block' : 'none';
+        }
+      });
+    }
+
+    // Function to add a new item row
+    function addItem(description = '', hsn = '', quantity = '', unitPrice = 0) {
+      const tbody = document.getElementById('items-tbody');
+      if (!tbody) return;
+      const rowCount = tbody.children.length + 1;
+      const showRemove = tbody.children.length >= 1; // Show (-) if there will be 2 or more rows after adding
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${rowCount}</td>
+        <td><input type="text" class="item-description" value="${description}"></td>
+        <td><input type="text" class="item-hsn" value="${hsn}"></td>
+        <td><input type="text" class="item-quantity" value="${quantity}"></td>
+        <td><input type="number" class="item-unit-price" value="${unitPrice}" min="0" step="0.01"></td>
+        <td class="item-value">0.00</td>
+        <td>
+          <button onclick="addItemAfter(this)">+</button>
+          <button onclick="removeItem(this)" style="display: ${showRemove ? 'inline-block' : 'none'}">-</button>
+        </td>
+      `;
+      tbody.appendChild(row);
+      attachEventListeners(row);
+      updateCalculations();
+      updateActionButtons();
+    }
+
+    // Function to add a new item after the current row
+    function addItemAfter(button) {
+      const currentRow = button.closest('tr');
+      const tbody = document.getElementById('items-tbody');
+      const newRow = document.createElement('tr');
+      const rowCount = tbody.children.length + 1;
+      newRow.innerHTML = `
+        <td>${rowCount}</td>
+        <td><input type="text" class="item-description" value=""></td>
+        <td><input type="text" class="item-hsn" value=""></td>
+        <td><input type="text" class="item-quantity" value=""></td>
+        <td><input type="number" class="item-unit-price" value="0" min="0" step="0.01"></td>
+        <td class="item-value">0.00</td>
+        <td>
+          <button onclick="addItemAfter(this)">+</button>
+          <button onclick="removeItem(this)" style="display: inline-block">-</button>
+        </td>
+      `;
+      currentRow.insertAdjacentElement('afterend', newRow);
+      updateSerialNumbers();
+      attachEventListeners(newRow);
+      updateCalculations();
+      updateActionButtons();
+    }
+
+    // Function to remove an item row
+    function removeItem(button) {
+      const tbody = document.getElementById('items-tbody');
+      if (tbody.children.length <= 1) return; // Prevent removing the last row
+      button.closest('tr').remove();
+      updateSerialNumbers();
+      updateCalculations();
+      updateActionButtons();
+    }
+
+    // Function to update serial numbers after removal
+    function updateSerialNumbers() {
+      const rows = document.querySelectorAll('#items-tbody tr');
+      rows.forEach((row, index) => {
+        row.cells[0].textContent = index + 1;
+      });
+    }
+
+    // Function to attach event listeners to input fields
+    function attachEventListeners(row) {
+      const inputs = row.querySelectorAll('input');
+      inputs.forEach(input => {
+        input.addEventListener('input', updateCalculations);
+      });
+    }
+
+    // Function to update calculations
+    function updateCalculations() {
+      let totalValue = 0;
+      const rows = document.querySelectorAll('#items-tbody tr');
+      rows.forEach(row => {
+        const quantityStr = row.querySelector('.item-quantity').value || '0';
+        const quantity = parseQuantity(quantityStr);
+        const unitPrice = parseFloat(row.querySelector('.item-unit-price').value) || 0;
+        const value = quantity * unitPrice;
+        row.querySelector('.item-value').textContent = value.toFixed(2);
+        totalValue += value;
+      });
+
+      const cgstRateInput = document.getElementById('cgst-rate');
+      const sgstRateInput = document.getElementById('sgst-rate');
+      if (!cgstRateInput || !sgstRateInput) return;
+
+      const cgstRate = parseFloat(cgstRateInput.value) || 0;
+      const sgstRate = parseFloat(sgstRateInput.value) || 0;
+      const cgstAmount = (totalValue * cgstRate) / 100;
+      const sgstAmount = (totalValue * sgstRate) / 100;
+      const grandTotal = totalValue + cgstAmount + sgstAmount;
+
+      const totalValueElement = document.getElementById('total-value');
+      const cgstAmountElement = document.getElementById('cgst-amount');
+      const sgstAmountElement = document.getElementById('sgst-amount');
+      const grandTotalElement = document.getElementById('grand-total');
+      const amountInWordsElement = document.getElementById('amount-in-words');
+
+      if (totalValueElement) totalValueElement.textContent = totalValue.toFixed(2);
+      if (cgstAmountElement) cgstAmountElement.textContent = cgstAmount.toFixed(2);
+      if (sgstAmountElement) sgstAmountElement.textContent = sgstAmount.toFixed(2);
+      if (grandTotalElement) grandTotalElement.textContent = grandTotal.toFixed(2);
+      if (amountInWordsElement) amountInWordsElement.textContent = numberToWords(Math.floor(grandTotal));
+    }
+
+    // Function to download the invoice as PDF
+    function downloadPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      // Set font and styles
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(12);
+
+      // Header
+      doc.setFontSize(16);
+      doc.text("TAX INVOICE", 105, 20, { align: "center" });
+      doc.setFontSize(14);
+      doc.text("BEDAMATA ENTERPRISES", 105, 30, { align: "center" });
+      doc.setFontSize(10);
+      doc.text("Near State Bank of India, Bhusugaon, Bhadrasahi, Barbil, Keonjhar-758035", 105, 40, { align: "center" });
+      doc.text("Mob.: 8249834818", 105, 46, { align: "center" });
+      doc.setFont("helvetica", "bold");
+      doc.text("GSTIN: 21ASGPR2606F1Z5", 105, 52, { align: "center" });
+      doc.setLineWidth(0.5);
+      doc.line(20, 55, 190, 55);
+
+      // Invoice Details
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      const customerName = document.getElementById('customer-name').value;
+      const customerAddress = document.getElementById('customer-address').value;
+      const customerGstin = document.getElementById('customer-gstin').value;
+      const invoiceNumber = document.getElementById('invoice-number').value;
+      const invoiceDate = document.getElementById('invoice-date').value;
+      const chalanNumber = document.getElementById('chalan-number').value;
+      const chalanDate = document.getElementById('chalan-date').value;
+
+      doc.text("To,", 20, 65);
+      doc.text(`M/s. ${customerName}`, 20, 71);
+      doc.text(`Address: ${customerAddress}`, 20, 77);
+      doc.text(`GSTIN: ${customerGstin}`, 20, 83);
+      doc.text(`SI.No.: ${invoiceNumber}`, 140, 65);
+      doc.text(`Date: ${invoiceDate}`, 140, 71);
+      doc.text(`Chalan.No.: ${chalanNumber}`, 140, 77);
+      doc.text(`Date: ${chalanDate}`, 140, 83);
+
+      // Table
+      const rows = document.querySelectorAll('#items-tbody tr');
+      let tableData = [];
+      rows.forEach((row, index) => {
+        const description = row.querySelector('.item-description').value;
+        const hsn = row.querySelector('.item-hsn').value;
+        const quantity = row.querySelector('.item-quantity').value;
+        const unitPrice = row.querySelector('.item-unit-price').value;
+        const value = row.querySelector('.item-value').textContent;
+        tableData.push([
+          (index + 1).toString(),
+          description,
+          hsn,
+          quantity,
+          unitPrice,
+          value
+        ]);
+      });
+
+      doc.autoTable({
+        startY: 90,
+        head: [['Sl No', 'Description of goods', 'HSN Code', 'Quantity', 'Unit Price Rs.', 'Value of goods Rs. P']],
+        body: tableData,
+        theme: 'grid',
+        styles: { fontSize: 8, cellPadding: 2 },
+        headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0] },
+        margin: { left: 20, right: 20 }
+      });
+
+      // Totals
+      let finalY = doc.lastAutoTable.finalY + 10;
+      const totalValue = document.getElementById('total-value').textContent;
+      const cgstRate = document.getElementById('cgst-rate').value;
+      const cgstAmount = document.getElementById('cgst-amount').textContent;
+      const sgstRate = document.getElementById('sgst-rate').value;
+      const sgstAmount = document.getElementById('sgst-amount').textContent;
+      const grandTotal = document.getElementById('grand-total').textContent;
+      const amountInWords = document.getElementById('amount-in-words').textContent;
+
+      doc.text(`Rupees: ${amountInWords} Only`, 20, finalY);
+      doc.text("Goods once sold can not taken back.", 20, finalY + 6);
+      doc.text("All disputes are subject to Bhubaneswar Jurisdiction", 20, finalY + 12);
+      doc.text("State Bank of India, Bhadrasahi, Barbil, Keonjhar", 20, finalY + 18);
+      doc.text("Account No.: 41434040309", 20, finalY + 24);
+      doc.text("IFSC Code: SBIN0006465", 20, finalY + 30);
+
+      doc.autoTable({
+        startY: finalY,
+        body: [
+          ['Total', totalValue],
+          [`CGST @ ${cgstRate}%`, cgstAmount],
+          [`SGST @ ${sgstRate}%`, sgstAmount],
+          ['Grand Total', grandTotal]
+        ],
+        theme: 'grid',
+        styles: { fontSize: 8, cellPadding: 2 },
+        columnStyles: { 0: { cellWidth: 30 }, 1: { cellWidth: 30, halign: 'right' } },
+        margin: { left: 140 }
+      });
+
+      // Signature
+      finalY = doc.lastAutoTable.finalY + 10;
+      doc.text("For BEDAMATA ENTERPRISES", 140, finalY, { align: "right" });
+
+      // Save PDF
+      doc.save(`Invoice_${invoiceNumber}.pdf`);
+    }
+
+    // Initialize after DOM is loaded
+    document.addEventListener('DOMContentLoaded', () => {
+      const invoiceDateElement = document.getElementById('invoice-date');
+      const chalanDateElement = document.getElementById('chalan-date');
+      if (invoiceDateElement) {
+        invoiceDateElement.value = formatDate();
+      }
+      if (chalanDateElement) {
+        chalanDateElement.value = formatDate();
+      }
+
+      // Add initial items
+      addItem('Ultratech Cement', '25232970', '150 bags', 275);
+
+      // Add event listeners for tax rate inputs
+      const cgstRateInput = document.getElementById('cgst-rate');
+      const sgstRateInput = document.getElementById('sgst-rate');
+      if (cgstRateInput) cgstRateInput.addEventListener('input', updateCalculations);
+      if (sgstRateInput) sgstRateInput.addEventListener('input', updateCalculations);
+    });
+  </script>
+</body>
+</html>
